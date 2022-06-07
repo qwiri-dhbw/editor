@@ -12,4 +12,18 @@ public class IDGAF {
         }
     }
 
+    public static <T> T ifYouFail(
+        final ThrowableConsumer<T> runnable,
+        final Consumer<Exception> onError,
+        final T def
+    ) {
+        try {
+            return runnable.apply();
+        } catch (final Exception exception) {
+            onError.accept(exception);
+            return def;
+        }
+    }
+
+
 }

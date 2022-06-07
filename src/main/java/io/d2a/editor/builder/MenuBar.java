@@ -26,6 +26,10 @@ public class MenuBar {
         return this;
     }
 
+    public MenuBar with(final Menu builder) {
+        return this.with(builder.build());
+    }
+
     public MenuBar with(final JMenuItem item) {
         this.bar.add(item);
         return this;

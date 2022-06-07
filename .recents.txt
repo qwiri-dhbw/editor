@@ -1,2 +1,3 @@
 /Users/dstatzne/Desktop/test.txt
 /Users/dstatzne/Desktop/test2.txt
+/Users/dstatzne/all_lists.json

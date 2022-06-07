@@ -40,6 +40,10 @@ public class Menu implements Builder<Menu, JMenu> {
         return this;
     }
 
+    public Menu with(final Item builder) {
+        return this.with(builder.build());
+    }
+
     public Menu with(final JMenu menu) {
         this.menu.add(menu);
         return this;

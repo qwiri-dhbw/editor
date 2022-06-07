@@ -5,8 +5,13 @@ import io.d2a.editor.builder.Menu;
 import io.d2a.editor.builder.MenuBar;
 import io.d2a.editor.helper.IDGAF;
 import io.d2a.editor.helper.Recents;
+import io.d2a.editor.helper.ThrowableConsumer;
 import io.d2a.editor.popup.DiscardChangesDialog;
 import io.d2a.editor.popup.DiscardChangesDialog.Result;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -18,7 +23,9 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.tools.Tool;
 
 public class EditorFrame extends JFrame {
 
@@ -27,6 +34,7 @@ public class EditorFrame extends JFrame {
     }
 
     public static final String DEFAULT_FILE_NAME = "Untitled";
+    public static final Runnable NOT_IMPLEMENTED = () -> System.out.println("Not implemented");
 
     /**
      * Used to indicate whether we have unsaved changes
@@ -230,6 +238,9 @@ public class EditorFrame extends JFrame {
      * @param event Action Event
      */
     private void handleFileClose(final ActionEvent event) {
+        if (!this.checkRelease()) {
+            return;
+        }
         System.exit(0);
     }
 
@@ -251,6 +262,28 @@ public class EditorFrame extends JFrame {
         this.saveFile(true);
     }
 
+    private void handleEditCopy(final ActionEvent event) {
+        final String content = this.textPane.getSelectedText();
+        if (content == null) { // copy nothing if no text is selected
+            return;
+        }
+        final StringSelection selection = new StringSelection(content);
+        final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(selection, selection);
+    }
+
+    private void handleEditPaste(final ActionEvent event) {
+        final String content = IDGAF.ifYouFail(() -> (String) Toolkit.getDefaultToolkit()
+            .getSystemClipboard()
+            .getData(DataFlavor.stringFlavor), Exception::printStackTrace, null);
+        if (content == null) {
+            return;
+        }
+        IDGAF.ifYouFail(() -> this.textPane.getDocument()
+            .insertString(this.textPane.getCaretPosition(), content, null),
+            Exception::printStackTrace);
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
 
     public EditorFrame() {
@@ -258,40 +291,33 @@ public class EditorFrame extends JFrame {
 
         // create menu
         final JMenuBar menuBar = MenuBar.builder()
+            // FILE
             .with(Menu.builder("File")
-                // Create new file
-                .with(Item.builder("New")
-                    .click(this::handleFileNew)
-                    .mnemonic('n')
-                    .build())
-                // Open file
-                .with(Item.builder("Open")
-                    .click(this::handleFileOpen)
-                    .mnemonic('o')
-                    .build())
-                // Open recent file
+                .with(Item.builder("New").click(this::handleFileNew).mnemonic('n'))
+                .with(Item.builder("Open").click(this::handleFileOpen).mnemonic('o'))
                 .with(this.recentMenu = Menu.builder("Open Recent...").build())
                 .separator()
-                // Close editor
-                .with(Item.builder("Close")
-                    .click(this::handleFileClose)
-                    .mnemonic('q')
-                    .build())
+                .with(Item.builder("Close").click(this::handleFileClose).mnemonic('q'))
                 .separator()
-                // Save current file
-                .with(Item.builder("Save")
-                    .click(this::handleFileSave)
-                    .mnemonic('s')
-                    .build())
-                // Save current file as new file
+                .with(Item.builder("Save").click(this::handleFileSave).mnemonic('s'))
                 .with(Item.builder("Save As").click(this::handleFileSaveAs).build())
                 .build())
+            // EDIT
+            .with(Menu.builder("Edit")
+                .with(Item.builder("Copy").click(this::handleEditCopy).mnemonic('c'))
+                .with(Item.builder("Paste").click(this::handleEditPaste).mnemonic('p'))
+                .separator()
+                .with(Item.builder("Search").click(NOT_IMPLEMENTED).mnemonic('f'))
+                .with(Item.builder("Search & Replace").click(NOT_IMPLEMENTED).mnemonic('r')))
             .build();
 
         // update recent file menu
         this.updateRecentMenu();
         this.setJMenuBar(menuBar);
-        this.add(this.textPane);
+
+        final JScrollPane scrollPane = new JScrollPane(this.textPane);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        this.add(scrollPane);
 
         // text pane
         this.textPane.addKeyListener(new KeyAdapter() {
