@@ -2,7 +2,6 @@ package io.d2a.editor.popup;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.util.function.Consumer;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -12,30 +11,29 @@ import javax.swing.JPanel;
 
 public class DiscardChangesDialog extends JDialog {
 
-   public enum Result {
+    public static enum Result {
+        NONE,
         SAVE,
         DISCARD,
         CANCEL;
     }
 
-    private final Consumer<Result> consumer;
+    private Result value = Result.NONE;
 
-    public static void open(
+    public static Result open(
         final JFrame owner,
-        final String fileName,
-        final Consumer<Result> resultConsumer
+        final String fileName
     ) {
-        final DiscardChangesDialog frame = new DiscardChangesDialog(owner, fileName, resultConsumer);
+        final DiscardChangesDialog frame = new DiscardChangesDialog(owner, fileName);
         frame.setVisible(true);
+        return frame.value;
     }
 
     private DiscardChangesDialog(
         final JFrame owner,
-        final String fileName,
-        final Consumer<Result> resultConsumer
+        final String fileName
     ) {
         super(owner, true);
-        this.consumer = resultConsumer;
 
         final JPanel main = new JPanel();
         main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
@@ -74,18 +72,18 @@ public class DiscardChangesDialog extends JDialog {
     }
 
     private void handleSave(final ActionEvent event) {
+        this.value = Result.SAVE;
         this.dispose();
-        this.consumer.accept(Result.SAVE);
     }
 
     private void handleDiscord(final ActionEvent event) {
+        this.value = Result.DISCARD;
         this.dispose();
-        this.consumer.accept(Result.DISCARD);
     }
 
     private void handleCancel(final ActionEvent event) {
+        this.value = Result.CANCEL;
         this.dispose();
-        this.consumer.accept(Result.CANCEL);
     }
 
 }

@@ -39,6 +39,10 @@ public class Item implements Builder<Item, JMenuItem> {
         return this;
     }
 
+    public Item click(final Runnable runnable) {
+        return this.click(event -> runnable.run());
+    }
+
     @Override
     public JMenuItem build() {
         return this.item;
